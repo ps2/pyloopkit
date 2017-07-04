@@ -31,6 +31,7 @@ class DoseStore:
     def filter_date_range(self, doses, start_date, end_date):
         return filter(lambda x: self.in_date_range(x, start_date, end_date), doses)
 
+    # Retrieves dose entries normalized to the current basal schedule.
     def get_normalized_dose_entries(self, start_date, end_date = None):
         query = {'count':0} # Don't limit by count
         if end_date:
@@ -46,10 +47,16 @@ class DoseStore:
         treatments = self.ns_client.get_treatments(query)
         doses = self.ns_treatments_to_doses(treatments)
 
-        basal_schedule = self.ns_client.get_schedule()
+        profiles = self.ns_client.get_profiles()
 
         doses.sort(key=lambda x: x.start_date)
 
+        # This adjusts start and stop times of overlapping records to reflect when
+        # They were actually active.
         reconciled_doses = insulin_math.reconcile_doses(doses)
-        normalized_doses = insulin_math.normalize(reconciled_doses, schedule)
+
+        # This normalizes rates against the basal schedule.  Rates can be negative
+        # after this transformation
+        normalized_doses = insulin_math.normalize(reconciled_doses, profiles)
+
         return self.filter_date_range(normalized_doses, start_date, end_date)

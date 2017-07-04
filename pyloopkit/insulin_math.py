@@ -70,14 +70,15 @@ def reconcile_doses(doses):
 
     return reconciled
 
-def normalize_basal_dose(dose, schedule):
+def normalize_basal_dose(dose, profile):
     return [dose]
 
-def normalize(doses, schedule):
+def normalize(doses, profiles):
     normalized = []
     for dose in doses:
         if dose.unit == DoseUnit.UnitsPerHour:
-            normalized.extend(normalizeBasalDose, schedule)
+            profile = profiles.get_profile_definition_active_during(dose.start_date).get_default_profile()
+            normalized.extend(normalize_basal_dose(dose, profile))
         else:
             normalized.append(dose)
     return doses
