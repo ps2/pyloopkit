@@ -14,7 +14,7 @@ class DoseEntry:
     def __init__(self, dose_entry_type, start_date, end_date = None, value = None, unit = None, description = None):
         self.dose_entry_type = dose_entry_type
         self.start_date = start_date
-        self.end_date = end_date
+        self.end_date = end_date or start_date
         self.value = value
         self.unit = unit
         self.description = description

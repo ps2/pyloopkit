@@ -13,7 +13,7 @@ def reconcile_doses(doses):
             if last_temp_basal:
                 end_date = min(last_temp_basal.end_date, dose.start_date)
 
-                # Ignore 0-duration doses
+                # Ignore 0-duration temp basals
                 if end_date > last_temp_basal.start_date:
                     reconciled.append(DoseEntry(
                         last_temp_basal.dose_entry_type,
@@ -71,6 +71,8 @@ def reconcile_doses(doses):
     return reconciled
 
 def normalize_basal_dose(dose, profile):
+    normalizedDoses = []
+    basal_items = profile.between(dose.start_date, dose.end_date)
     return [dose]
 
 def normalize(doses, profiles):
