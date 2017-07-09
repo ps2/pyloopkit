@@ -19,6 +19,9 @@ class DoseEntry:
         self.unit = unit
         self.description = description
 
+    def __repr__(self):
+        return "%s %s : %f for %d minutes" % (self.dose_entry_type.name, self.start_date.isoformat(), self.value, (self.end_date - self.start_date).total_seconds() / 60)
+
     def as_dict(self):
         return dict(
             dose_entry_type=self.dose_entry_type,
