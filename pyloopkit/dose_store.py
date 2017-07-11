@@ -2,7 +2,20 @@ from datetime import datetime, timedelta
 import insulin_math
 from dose_entry import *
 
+class BasalSchedule:
+    """ Exposes a simplified api to InsulinMath that abstracts away
+        profile definition sets
+    """
+    def __init__(self, profile_definition_set):
+        self.profile_definition_set = profile_definition_set
+
+    def between(self, start_date, end_date):
+        active_profile = self.profile_definition_set.get_profile_definition_active_at(start_date)
+        schedule = active_profile.basal
+        return schedule.between(start_date, end_date)
+
 class DoseStore:
+    """ DoseStore backed by Nightscout """
     def __init__(self, ns_client):
         self.ns_client = ns_client
 
@@ -57,6 +70,7 @@ class DoseStore:
 
         # This normalizes rates against the basal schedule.  Rates can be negative
         # after this transformation
-        normalized_doses = insulin_math.normalize(reconciled_doses, profiles)
+        basal_schedule = BasalSchedule(profiles)
+        normalized_doses = insulin_math.normalize(reconciled_doses, basal_schedule)
 
         return self.filter_date_range(normalized_doses, start_date, end_date)

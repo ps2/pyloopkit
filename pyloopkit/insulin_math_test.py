@@ -30,9 +30,6 @@ class MockSchedule():
 
 
 class InsulinMathTestCase(unittest.TestCase):
-#    def setUp(self):
-
-#    def tearDown(self):
 
     def test_reconcile_passes_bolus(self):
         bolus = DoseEntry(DoseEntryType.Bolus, datetime.now(), value = 5, unit = DoseUnit.Units)

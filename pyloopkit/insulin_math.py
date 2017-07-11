@@ -70,9 +70,9 @@ def reconcile_doses(doses):
 
     return reconciled
 
-def normalize_basal_dose(dose, profile):
+def normalize_basal_dose(dose, basal_schedule):
     normalized_doses = []
-    basal_items = profile.between(dose.start_date, dose.end_date)
+    basal_items = basal_schedule.between(dose.start_date, dose.end_date)
 
     for (index, basal_item) in enumerate(basal_items):
         units_per_hour = dose.value - basal_item.value
@@ -94,11 +94,11 @@ def normalize_basal_dose(dose, profile):
 
     return normalized_doses
 
-def normalize(doses, profile):
+def normalize(doses, basal_schedule):
     normalized = []
     for dose in doses:
         if dose.unit == DoseUnit.UnitsPerHour:
-            normalized.extend(normalize_basal_dose(dose, profile))
+            normalized.extend(normalize_basal_dose(dose, basal_schedule))
         else:
             normalized.append(dose)
     return normalized
