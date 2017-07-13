@@ -1,4 +1,14 @@
 from dose_entry import *
+import math
+from datetime import datetime, timedelta
+
+class InsulinValue:
+    def __init__(self, start_date, value):
+        self.start_date = start_date
+        self.value = value
+
+    def __repr__(self):
+        return "InsulinValue(%s %s units)" % (self.start_date, self.value)
 
 def reconcile_doses(doses):
     reconciled = []
@@ -102,3 +112,35 @@ def normalize(doses, basal_schedule):
         else:
             normalized.append(dose)
     return normalized
+
+def date_floored_to_time_interval(date, delta):
+    num_intervals = math.floor((date - datetime.utcfromtimestamp(0)).total_seconds() / delta.total_seconds())
+    return datetime.utcfromtimestamp(num_intervals * delta.total_seconds())
+
+def date_ceiled_to_time_interval(date, delta):
+    num_intervals = math.ceil((date - datetime.utcfromtimestamp(0)).total_seconds() / delta.total_seconds())
+    return datetime.utcfromtimestamp(num_intervals * delta.total_seconds())
+
+def interpolate_doses_to_timeline(doses, start_date=None, end_date=None, delta=timedelta(minutes=5)):
+
+    start_date = start_date or doses[0].start_date
+    if end_date == None:
+        end_dates = [d.end_date for d in doses]
+        end_dates.sort()
+        end_date = end_dates[-1]
+
+    start_date = date_floored_to_time_interval(start_date, delta)
+    end_date = date_ceiled_to_time_interval(end_date, delta)
+
+    date = start_date
+    values = []
+
+    while True:
+        value = reduce(lambda sum,dose: sum+dose.units_delivered_during_daterange(date, date+delta), doses, 0)
+
+        date = date + delta
+        values.append(InsulinValue(date, value))
+        if date >= end_date:
+            break
+
+    return values

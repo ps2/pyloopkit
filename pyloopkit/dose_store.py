@@ -10,9 +10,9 @@ class BasalSchedule:
         self.profile_definition_set = profile_definition_set
 
     def between(self, start_date, end_date):
-        active_profile = self.profile_definition_set.get_profile_definition_active_at(start_date)
-        schedule = active_profile.basal
-        return schedule.between(start_date, end_date)
+        active_profile_def = self.profile_definition_set.get_profile_definition_active_at(start_date)
+        profile = active_profile_def.get_default_profile()
+        return profile.basal.between(start_date, end_date)
 
 class DoseStore:
     """ DoseStore backed by Nightscout """
@@ -25,11 +25,10 @@ class DoseStore:
             return DoseEntry(DoseEntryType.TempBasal, treatment.timestamp, end_date, treatment.rate, DoseUnit.UnitsPerHour)
         if treatment.eventType == 'Correction Bolus':
             return DoseEntry(DoseEntryType.Bolus, treatment.timestamp, treatment.timestamp, treatment.insulin, DoseUnit.Units)
-        if treatment.eventType == 'Pump Suspend':
-            if treatment.suspended:
-                return DoseEntry(DoseEntryType.Suspend, treatment.timestamp, treatment.timestamp)
-            else:
-                return DoseEntry(DoseEntryType.Resume, treatment.timestamp, treatment.timestamp)
+        if treatment.eventType == 'Suspend Pump':
+            return DoseEntry(DoseEntryType.Suspend, treatment.timestamp, treatment.timestamp, 0, DoseUnit.UnitsPerHour)
+        if treatment.eventType == 'Resume Pump':
+            return DoseEntry(DoseEntryType.Resume, treatment.timestamp, treatment.timestamp)
 
     def ns_treatments_to_doses(self, treatments):
         return filter(None, [self.treatment_to_dose(t) for t in treatments])
@@ -44,8 +43,7 @@ class DoseStore:
     def filter_date_range(self, doses, start_date, end_date):
         return filter(lambda x: self.in_date_range(x, start_date, end_date), doses)
 
-    # Retrieves dose entries normalized to the current basal schedule.
-    def get_normalized_dose_entries(self, start_date, end_date = None):
+    def fetch_treatments(self, start_date, end_date = None):
         query = {'count':0} # Don't limit by count
         if end_date:
             query['find[timestamp][$lte]'] = end_date.isoformat()
@@ -55,9 +53,13 @@ class DoseStore:
         # but still be delivering at start_date
         query['find[timestamp][$gte]'] = (start_date - timedelta(hours=6)).isoformat()
 
-        print "Fetching treatments after %s" % (start_date - timedelta(hours=6)).isoformat()
+        return self.ns_client.get_treatments(query)
 
-        treatments = self.ns_client.get_treatments(query)
+    # Retrieves dose entries normalized to the current basal schedule.
+    def get_normalized_dose_entries(self, start_date, end_date = None):
+
+        treatments = self.fetch_treatments(start_date, end_date)
+
         doses = self.ns_treatments_to_doses(treatments)
 
         profiles = self.ns_client.get_profiles()

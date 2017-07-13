@@ -3,7 +3,6 @@ from insulin_math import *
 from dose_entry import *
 from datetime import datetime, timedelta
 
-
 class AbsoluteScheduleValue():
     def __init__(self, start_date, value):
         self.start_date = start_date
@@ -97,6 +96,29 @@ class InsulinMathTestCase(unittest.TestCase):
             self.assertAlmostEqual(dose.value, expected.value)
             self.assertEqual(dose.start_date, expected.start_date)
             self.assertEqual(dose.end_date, expected.end_date)
+
+    def test_interpolate_doses_to_timeline(self):
+        t = datetime(2017,7,7)
+        doses = [
+            DoseEntry(DoseEntryType.TempBasal, t+timedelta(minutes=00), t+timedelta(minutes=30), value = 1, unit = DoseUnit.UnitsPerHour),
+            DoseEntry(DoseEntryType.Bolus, t+timedelta(minutes=15), value = 1, unit = DoseUnit.Units)
+        ]
+
+        values = interpolate_doses_to_timeline(doses)
+        self.assertEqual(len(values), 6)
+
+        expected = [
+            InsulinValue(t+timedelta(minutes=05), 0.0833333),
+            InsulinValue(t+timedelta(minutes=10), 0.0833333),
+            InsulinValue(t+timedelta(minutes=15), 0.0833333),
+            InsulinValue(t+timedelta(minutes=20), 1.0833333),
+            InsulinValue(t+timedelta(minutes=25), 0.0833333),
+            InsulinValue(t+timedelta(minutes=30), 0.0833333),
+        ]
+
+        for value, expected_value in zip(values, expected):
+            self.assertEqual(value.start_date, expected_value.start_date)
+            self.assertAlmostEqual(value.value, expected_value.value)
 
 if __name__ == '__main__':
     unittest.main()
