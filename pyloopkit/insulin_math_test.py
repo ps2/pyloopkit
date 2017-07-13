@@ -2,6 +2,7 @@ import unittest
 from insulin_math import *
 from dose_entry import *
 from datetime import datetime, timedelta
+import pytz
 
 class AbsoluteScheduleValue():
     def __init__(self, start_date, value):
@@ -98,7 +99,7 @@ class InsulinMathTestCase(unittest.TestCase):
             self.assertEqual(dose.end_date, expected.end_date)
 
     def test_interpolate_doses_to_timeline(self):
-        t = datetime(2017,7,7)
+        t = datetime(2017,7,7,tzinfo=pytz.utc).astimezone(pytz.timezone('US/Central'))
         doses = [
             DoseEntry(DoseEntryType.TempBasal, t+timedelta(minutes=00), t+timedelta(minutes=30), value = 1, unit = DoseUnit.UnitsPerHour),
             DoseEntry(DoseEntryType.Bolus, t+timedelta(minutes=15), value = 1, unit = DoseUnit.Units)

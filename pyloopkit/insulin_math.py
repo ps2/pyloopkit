@@ -1,14 +1,7 @@
 from dose_entry import *
-import math
-from datetime import datetime, timedelta
-
-class InsulinValue:
-    def __init__(self, start_date, value):
-        self.start_date = start_date
-        self.value = value
-
-    def __repr__(self):
-        return "InsulinValue(%s %s units)" % (self.start_date, self.value)
+from datetime import timedelta
+from date_math import *
+from insulin_value import *
 
 def reconcile_doses(doses):
     reconciled = []
@@ -112,14 +105,6 @@ def normalize(doses, basal_schedule):
         else:
             normalized.append(dose)
     return normalized
-
-def date_floored_to_time_interval(date, delta):
-    num_intervals = math.floor((date - datetime.utcfromtimestamp(0)).total_seconds() / delta.total_seconds())
-    return datetime.utcfromtimestamp(num_intervals * delta.total_seconds())
-
-def date_ceiled_to_time_interval(date, delta):
-    num_intervals = math.ceil((date - datetime.utcfromtimestamp(0)).total_seconds() / delta.total_seconds())
-    return datetime.utcfromtimestamp(num_intervals * delta.total_seconds())
 
 def interpolate_doses_to_timeline(doses, start_date=None, end_date=None, delta=timedelta(minutes=5)):
 
