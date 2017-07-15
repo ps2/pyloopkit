@@ -25,5 +25,6 @@ class GlucoseStore:
         query['find[dateString][$gte]'] = start_date.isoformat()
 
         sgvs = self.ns_client.get_sgvs(query)
+        sgvs.sort(key=lambda x: x.date)
 
         return [self.sgv_to_glucose_value(sgv) for sgv in sgvs]
