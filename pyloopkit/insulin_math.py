@@ -108,14 +108,13 @@ def normalize(doses, basal_schedule):
 
 def interpolate_doses_to_timeline(doses, start_date=None, end_date=None, delta=timedelta(minutes=5)):
 
-    start_date = start_date or doses[0].start_date
+    if start_date == None:
+        start_date = date_floored_to_time_interval(doses[0].start_date, delta)
+
     if end_date == None:
         end_dates = [d.end_date for d in doses]
         end_dates.sort()
         end_date = end_dates[-1]
-
-    start_date = date_floored_to_time_interval(start_date, delta)
-    end_date = date_ceiled_to_time_interval(end_date, delta)
 
     date = start_date
     values = []
