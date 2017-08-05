@@ -117,14 +117,35 @@ def interpolate_doses_to_timeline(doses, start_date=None, end_date=None, delta=t
         end_date = end_dates[-1]
 
     date = start_date
-    values = []
+    delta_seconds = int(delta.total_seconds())
+    values = {}
 
-    while True:
-        value = reduce(lambda sum,dose: sum+dose.units_delivered_during_daterange(date, date+delta), doses, 0)
+    #print "delta_seconds = %s" % delta_seconds
 
-        date = date + delta
-        values.append(InsulinValue(date, value))
-        if date >= end_date:
-            break
+    max_offset = int((end_date - start_date).total_seconds())
 
-    return values
+    #print "max_offset = %s" % max_offset
+
+    for offset in range(0, max_offset, delta_seconds):
+        #print "assigning offset: %s" % offset
+        values[offset] = InsulinValue(start_date + timedelta(seconds=offset) + delta, 0)
+
+    for dose in doses:
+        d_start = int((dose.start_date - start_date).total_seconds()) / delta_seconds * delta_seconds
+        d_end = int((dose.end_date - start_date).total_seconds()) / delta_seconds * delta_seconds + delta_seconds
+        #print "working on dose %s" % dose
+        #print "d_start = %s" % d_start
+        #print "d_end = %s" % d_end
+        for offset in range(d_start, d_end, delta_seconds):
+            if offset >= max_offset or offset < 0:
+                continue
+            timestep_start = start_date + timedelta(seconds=offset)
+            timestep_end = timestep_start + delta
+            #print "looking up offset: %s" % offset
+            values[offset].value += dose.units_delivered_during_daterange(timestep_start, timestep_end)
+
+    output = []
+    for offset in sorted(values):
+        output.append(values[offset])
+
+    return output

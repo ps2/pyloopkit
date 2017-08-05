@@ -8,7 +8,8 @@ class CarbEntry:
         self.food_type = food_type
 
     def __repr__(self):
-        return "CarbEntry(%s %d %s %s)" % (self.start_date, self.quantity, self.absorption_time, self.food_type)
+        str = "CarbEntry(%s %d %s %s)" % (self.start_date, self.quantity, self.absorption_time, self.food_type)
+        return str.encode('utf-8')  # Support python 2.x
 
     def as_dict(self):
         return dict(
@@ -25,13 +26,16 @@ class CarbStore:
         self.ns_client = ns_client
 
     def carb_treatment_to_dose(self, treatment):
-        return CarbEntry(treatment.timestamp, treatment.carbs, timedelta(minutes=treatment.absorptionTime), treatment.foodType)
+        absorption = None
+        if treatment.absorptionTime:
+            absorption = timedelta(minutes=treatment.absorptionTime)
+        return CarbEntry(treatment.timestamp, treatment.carbs, absorption, treatment.foodType)
 
     def get_carb_entries(self, start_date, end_date = None):
         query = {'count':0} # Don't limit by count
         if end_date:
-            query['find[timestamp][$lte]'] = end_date.isoformat()
-        query['find[timestamp][$gte]'] = start_date.isoformat()
+            query['find[created_at][$lte]'] = end_date.isoformat()
+        query['find[created_at][$gte]'] = start_date.isoformat()
         query['find[eventType][$eq]'] = "Meal Bolus"
 
         carb_treatments = self.ns_client.get_treatments(query)

@@ -11,10 +11,10 @@ def carbs_in_date_range(entry, start_date, end_date):
 def interpolate_entries_to_timeline(entries, start_date=None, end_date=None, delta=timedelta(minutes=5)):
 
     if start_date == None:
-        start_date = date_floored_to_time_interval(doses[0].start_date, delta)
+        start_date = date_floored_to_time_interval(entries[0].start_date, delta)
 
     if end_date == None:
-        end_dates = [d.end_date for d in doses]
+        end_dates = [e.start_date for e in entries]
         end_dates.sort()
         end_date = end_dates[-1]
 

@@ -46,12 +46,12 @@ class DoseStore:
     def fetch_treatments(self, start_date, end_date = None):
         query = {'count':0} # Don't limit by count
         if end_date:
-            query['find[timestamp][$lte]'] = end_date.isoformat()
+            query['find[created_at][$lte]'] = end_date.isoformat()
 
         # Look 6 hours before start date, since an active temp basal could
         # have a long duration and have a timestamp much earlier than start_date
         # but still be delivering at start_date
-        query['find[timestamp][$gte]'] = (start_date - timedelta(hours=6)).isoformat()
+        query['find[created_at][$gte]'] = (start_date - timedelta(hours=6)).isoformat()
 
         return self.ns_client.get_treatments(query)
 
