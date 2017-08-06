@@ -1,7 +1,7 @@
 from datetime import datetime,timedelta
 
 class CarbEntry:
-    def __init__(self, start_date, quantity, absorption_time, food_type):
+    def __init__(self, start_date, quantity, absorption_time=None, food_type=None):
         self.start_date = start_date
         self.quantity = quantity
         self.absorption_time = absorption_time
