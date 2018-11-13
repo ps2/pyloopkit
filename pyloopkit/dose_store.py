@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
-import insulin_math
-from dose_entry import *
+from . import insulin_math
+from .dose_entry import *
 
 class BasalSchedule:
     """ Exposes a simplified api to InsulinMath that abstracts away
@@ -24,6 +24,8 @@ class DoseStore:
             end_date = treatment.timestamp + timedelta(minutes=treatment.duration)
             return DoseEntry(DoseEntryType.TempBasal, treatment.timestamp, end_date, treatment.rate, DoseUnit.UnitsPerHour)
         if treatment.eventType == 'Correction Bolus':
+            return DoseEntry(DoseEntryType.Bolus, treatment.timestamp, treatment.timestamp, treatment.insulin, DoseUnit.Units)
+        if treatment.eventType == 'Meal Bolus' and treatment.insulin != None:
             return DoseEntry(DoseEntryType.Bolus, treatment.timestamp, treatment.timestamp, treatment.insulin, DoseUnit.Units)
         if treatment.eventType == 'Suspend Pump':
             return DoseEntry(DoseEntryType.Suspend, treatment.timestamp, treatment.timestamp, 0, DoseUnit.UnitsPerHour)
@@ -63,6 +65,8 @@ class DoseStore:
         doses = self.ns_treatments_to_doses(treatments)
 
         profiles = self.ns_client.get_profiles()
+
+        doses = [d for d in doses if d.start_date]
 
         doses.sort(key=lambda x: x.start_date)
 

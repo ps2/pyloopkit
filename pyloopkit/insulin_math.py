@@ -1,7 +1,7 @@
-from dose_entry import *
 from datetime import timedelta
-from date_math import *
-from insulin_value import *
+from .dose_entry import *
+from .date_math import *
+from .insulin_value import *
 
 def reconcile_doses(doses):
     reconciled = []
@@ -120,29 +120,33 @@ def interpolate_doses_to_timeline(doses, start_date=None, end_date=None, delta=t
     delta_seconds = int(delta.total_seconds())
     values = {}
 
-    #print "delta_seconds = %s" % delta_seconds
+    #print("delta_seconds = %s" % delta_seconds)
 
     max_offset = int((end_date - start_date).total_seconds())
 
-    #print "max_offset = %s" % max_offset
+    #print("max_offset = %s" % max_offset)
 
     for offset in range(0, max_offset, delta_seconds):
-        #print "assigning offset: %s" % offset
-        values[offset] = InsulinValue(start_date + timedelta(seconds=offset) + delta, 0)
+        #print("assigning offset: %s" % offset)
+        values[offset] = InsulinValue(start_date + timedelta(seconds=offset), 0)
 
     for dose in doses:
-        d_start = int((dose.start_date - start_date).total_seconds()) / delta_seconds * delta_seconds
-        d_end = int((dose.end_date - start_date).total_seconds()) / delta_seconds * delta_seconds + delta_seconds
-        #print "working on dose %s" % dose
-        #print "d_start = %s" % d_start
-        #print "d_end = %s" % d_end
+        #print("********************************")
+        d_start = int((dose.start_date - start_date).total_seconds()) // delta_seconds * delta_seconds
+        d_end = int((dose.end_date - start_date).total_seconds()) // delta_seconds * delta_seconds + delta_seconds
+        #print("working on dose %s" % dose)
+        #print("d_start = %s" % d_start)
+        #print("d_end = %s" % d_end)
         for offset in range(d_start, d_end, delta_seconds):
             if offset >= max_offset or offset < 0:
                 continue
             timestep_start = start_date + timedelta(seconds=offset)
             timestep_end = timestep_start + delta
-            #print "looking up offset: %s" % offset
-            values[offset].value += dose.units_delivered_during_daterange(timestep_start, timestep_end)
+            #print("looking up offset: %s for dose %s" % (offset, dose))
+            partial_dose = dose.units_delivered_during_daterange(timestep_start, timestep_end)
+            #print("between %s and %s, delivered %s" % (timestep_start, timestep_end, partial_dose))
+            #print("Adding to %s" % values[offset].start_date)
+            values[offset].value += partial_dose
 
     output = []
     for offset in sorted(values):

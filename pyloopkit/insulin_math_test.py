@@ -1,6 +1,6 @@
 import unittest
-from insulin_math import *
-from dose_entry import *
+from .insulin_math import *
+from .dose_entry import *
 from datetime import datetime, timedelta
 import pytz
 
@@ -78,7 +78,7 @@ class InsulinMathTestCase(unittest.TestCase):
             AbsoluteScheduleValue(t + timedelta(hours=3), 0.9)
         ])
         doses = [
-            DoseEntry(DoseEntryType.TempBasal, t+timedelta(minutes=00), t+timedelta(minutes=30), value = 1, unit = DoseUnit.UnitsPerHour),
+            DoseEntry(DoseEntryType.TempBasal, t+timedelta(minutes=0), t+timedelta(minutes=30), value = 1, unit = DoseUnit.UnitsPerHour),
             DoseEntry(DoseEntryType.TempBasal, t+timedelta(minutes=45), t+timedelta(minutes=75), value = 1, unit = DoseUnit.UnitsPerHour),
             DoseEntry(DoseEntryType.TempBasal, t+timedelta(minutes=100), t+timedelta(minutes=130), value = 1, unit = DoseUnit.UnitsPerHour),
         ]
@@ -86,7 +86,7 @@ class InsulinMathTestCase(unittest.TestCase):
         normalized_doses = normalize(doses,schedule)
 
         expected_doses = [
-            DoseEntry(DoseEntryType.TempBasal, t+timedelta(minutes=00), t+timedelta(minutes=30), value=-0.2, unit = DoseUnit.UnitsPerHour),
+            DoseEntry(DoseEntryType.TempBasal, t+timedelta(minutes=0), t+timedelta(minutes=30), value=-0.2, unit = DoseUnit.UnitsPerHour),
             DoseEntry(DoseEntryType.TempBasal, t+timedelta(minutes=45), t+timedelta(minutes=60), value=-0.2, unit = DoseUnit.UnitsPerHour),
             DoseEntry(DoseEntryType.TempBasal, t+timedelta(minutes=60), t+timedelta(minutes=75), value=0.2, unit = DoseUnit.UnitsPerHour),
             DoseEntry(DoseEntryType.TempBasal, t+timedelta(minutes=100), t+timedelta(minutes=120), value=0.2, unit = DoseUnit.UnitsPerHour),
@@ -101,7 +101,7 @@ class InsulinMathTestCase(unittest.TestCase):
     def test_interpolate_doses_to_timeline(self):
         t = datetime(2017,7,7,tzinfo=pytz.utc).astimezone(pytz.timezone('US/Central'))
         doses = [
-            DoseEntry(DoseEntryType.TempBasal, t+timedelta(minutes=00), t+timedelta(minutes=30), value = 1, unit = DoseUnit.UnitsPerHour),
+            DoseEntry(DoseEntryType.TempBasal, t+timedelta(minutes=0), t+timedelta(minutes=30), value = 1, unit = DoseUnit.UnitsPerHour),
             DoseEntry(DoseEntryType.Bolus, t+timedelta(minutes=15), value = 1, unit = DoseUnit.Units)
         ]
 
@@ -109,12 +109,40 @@ class InsulinMathTestCase(unittest.TestCase):
         self.assertEqual(len(values), 6)
 
         expected = [
-            InsulinValue(t+timedelta(minutes=05), 0.0833333),
+            InsulinValue(t+timedelta(minutes=0), 0.0833333),
+            InsulinValue(t+timedelta(minutes=5), 0.0833333),
             InsulinValue(t+timedelta(minutes=10), 0.0833333),
-            InsulinValue(t+timedelta(minutes=15), 0.0833333),
-            InsulinValue(t+timedelta(minutes=20), 1.0833333),
+            InsulinValue(t+timedelta(minutes=15), 1.0833333),
+            InsulinValue(t+timedelta(minutes=20), 0.0833333),
             InsulinValue(t+timedelta(minutes=25), 0.0833333),
-            InsulinValue(t+timedelta(minutes=30), 0.0833333),
+        ]
+
+        for value, expected_value in zip(values, expected):
+            self.assertEqual(value.start_date, expected_value.start_date)
+            self.assertAlmostEqual(value.value, expected_value.value)
+
+
+    def test_interpolate_doses_to_timeline2(self):
+
+        doses = [
+            DoseEntry(DoseEntryType.TempBasal, datetime(2018, 11, 12, 22, 22, 52, tzinfo=pytz.utc), datetime(2018, 11, 12, 22, 26, 55, tzinfo=pytz.utc), value =  2.375, unit = DoseUnit.UnitsPerHour),
+            DoseEntry(DoseEntryType.TempBasal, datetime(2018, 11, 12, 22, 26, 55, tzinfo=pytz.utc), datetime(2018, 11, 12, 22, 31,  0, tzinfo=pytz.utc), value =  2.1,   unit = DoseUnit.UnitsPerHour),
+            DoseEntry(DoseEntryType.TempBasal, datetime(2018, 11, 12, 22, 31,  0, tzinfo=pytz.utc), datetime(2018, 11, 12, 22, 31, 34, tzinfo=pytz.utc), value =  2.7,   unit = DoseUnit.UnitsPerHour),
+            DoseEntry(DoseEntryType.Suspend,   datetime(2018, 11, 12, 22, 31, 34, tzinfo=pytz.utc),                                                      value = -0.4,   unit = DoseUnit.UnitsPerHour)
+        ]
+
+        start = datetime(2018, 11, 12, 22, 21, 7, 229067, tzinfo=pytz.utc)
+        end =   datetime(2018, 11, 12, 22, 36, 7, 229067, tzinfo=pytz.utc)
+
+        values = interpolate_doses_to_timeline(doses, start, end)
+        for v in values:
+            print(v)
+        self.assertEqual(len(values), 3)
+
+        expected = [
+            InsulinValue(start+timedelta(minutes=0), 0.1287969539236111),
+            InsulinValue(start+timedelta(minutes=5), 0.17985401299305553),
+            InsulinValue(start+timedelta(minutes=10), 0.020078199749999998),
         ]
 
         for value, expected_value in zip(values, expected):

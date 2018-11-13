@@ -1,6 +1,6 @@
-from carb_store import CarbEntry
-from date_math import *
 from datetime import timedelta
+from .carb_store import CarbEntry
+from .date_math import *
 
 
 def interpolate_entries_to_timeline(entries, start_date=None, end_date=None, delta=timedelta(minutes=5)):
@@ -28,6 +28,7 @@ def interpolate_entries_to_timeline(entries, start_date=None, end_date=None, del
         offset = date_to_offset(entry.start_date)
         #print "offset = %d" % offset
         if offset >= 0 and offset < num_entries:
-            output[offset].quantity += entry.quantity
+            if entry.quantity:
+                output[offset].quantity += entry.quantity
 
     return output

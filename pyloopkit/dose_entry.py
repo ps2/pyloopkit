@@ -11,7 +11,7 @@ class DoseUnit(Enum):
     Units = "U"
 
 class DoseEntry:
-    def __init__(self, dose_entry_type, start_date, end_date = None, value = None, unit = None, description = None):
+    def __init__(self, dose_entry_type, start_date, end_date = None, value = 0, unit = None, description = None):
         self.dose_entry_type = dose_entry_type
         self.start_date = start_date
         self.end_date = end_date or start_date
@@ -20,7 +20,8 @@ class DoseEntry:
         self.description = description
 
     def __repr__(self):
-        return "%s %s : %f %s for %d minutes" % (self.dose_entry_type.name, self.start_date.isoformat(), self.value, self.unit.name, (self.end_date - self.start_date).total_seconds() / 60)
+        #return repr((self.dose_entry_type.name, self.start_date, self.value, self.unit, (self.end_date - self.start_date).total_seconds() / 60))
+        return "%s %s : %f %s for %d minutes" % (self.dose_entry_type.name, self.start_date, self.value, self.unit.name, (self.end_date - self.start_date).total_seconds() / 60)
 
     def units(self):
         if self.unit == DoseUnit.UnitsPerHour:
